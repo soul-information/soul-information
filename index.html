@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOUL INFORMATION</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <a class="logo" href="#home"><span>SOUL</span> INFORMATION</a>
+    <nav>
+      <a href="#home">홈</a>
+      <a href="#board">게시판</a>
+      <a href="#about">소개</a>
+      <a href="#questions" id="questionsNav">질문</a>
+    </nav>
+    <button class="search-box" id="searchBtn" aria-label="검색">
+      <span class="search-icon">⌕</span>
+      <span class="search-text">검색하기...</span>
+      <span class="search-x">×</span>
+    </button>
+    <div class="search-message" id="searchMessage">사실 이 사이트는<br>검색할게 없어요!</div>
+  </header>
+
+  <main id="home">
+    <section class="hero card" id="about">
+      <div class="avatar"><img src="soul-profile.jpg" alt="소울 프로필 사진"></div>
+      <div class="intro">
+        <p class="eyebrow">HELLO!</p>
+        <h1><span>SOUL</span> INFORMATION</h1>
+        <p class="hello">어서오세요! 제가 누군지 궁금하다면 사이트를 조금 둘러봐요!</p>
+
+        <div class="profile">
+          <div><b>👤 이름</b><span>소울</span></div>
+          <div><b>🔒 본명</b><span>이<span class="error-text">████ ERROR ████</span></span></div>
+          <div><b>▣ 나이</b><span>고등학생 <small>(몇 학년인지는 비공개)</small></span></div>
+<div><b>📍 지역</b><span>대구 <small>(삼성라이온즈 화이팅!)</small></span></div>
+          <div><b>♥ 좋아하는 것</b><span>노래 듣기, 챗지피티</span></div>
+          <div><b>⊗ 싫어하는 것</b><span>패드립, 무관심</span></div>
+        </div>
+      </div>
+      <div class="doodle">좋은 사람들과<br>재밌는 이야기를,<br>여기서 함께해요!<br>☺</div>
+      <p class="big-message">더 알고 싶은건 저랑 직접 친해지면서 알아봐요!</p>
+    </section>
+
+    <section class="board-wrap" id="board">
+      <div class="board card">
+        <div class="section-head">
+          <div><h2>게시판</h2><p>자유롭게 이야기하는 공간이에요! 😊</p></div>
+          <div class="board-actions"><button id="addPost">글쓰기 +</button></div>
+        </div>
+        <div id="posts"></div>
+      </div>
+      <aside class="side card">
+        <strong>SOUL INFORMATION</strong>
+        <p>재밌는 얘기가 있다면<br>저한테도 들려주세요!</p>
+        <div class="heart">♡</div>
+        <small>항상 좋은 하루 되세요!<br><br>- 소울 -</small>
+      </aside>
+    </section>
+
+    <section class="questions-section card" id="questions">
+      <div class="question-hero">
+        <p class="eyebrow">Q & A</p>
+        <h2>원하시는 질문이 있으면 언제든 해주세요!</h2>
+        <p>궁금한게 있다면 언제든 써주세요!</p>
+        <button id="askQuestion" class="question-button">질문하기 ✦</button>
+      </div>
+      <div class="question-list-wrap">
+        <div class="question-list-head">
+          <h3>질문 목록</h3>
+          <span id="questionCount">0개의 질문</span>
+        </div>
+        <div id="questionList"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <dialog id="postDialog">
+    <form method="dialog" id="postForm">
+      <h3>새 글 작성</h3>
+      <input id="postAuthor" maxlength="30" placeholder="작성자" required>
+      <input id="postTitle" maxlength="60" placeholder="제목" required>
+      <textarea id="postContent" maxlength="500" placeholder="내용" required></textarea>
+      <div class="dialog-actions">
+        <button value="cancel" type="button" id="cancelPost">취소</button>
+        <button value="default" class="primary">등록</button>
+      </div>
+    </form>
+  </dialog>
+
+
+  <dialog id="postViewDialog">
+    <div class="post-view">
+      <button class="modal-close" id="closePostView" aria-label="닫기">×</button>
+      <p class="eyebrow">POST</p>
+      <h3 id="viewPostTitle"></h3>
+      <div class="post-content" id="viewPostContent"></div>
+      <small id="viewPostDate"></small>
+      <div class="reply-area">
+        <div class="reply-head">
+          <strong>답장</strong>
+          <button type="button" class="reply-button" id="replyPost">답장하기</button>
+        </div>
+        <div id="postReplies" class="replies"></div>
+      </div>
+      <button class="delete-icon" id="deletePost" aria-label="게시글 삭제" title="게시글 삭제">🗑</button>
+    </div>
+  </dialog>
+
+  <dialog id="questionDialog">
+    <form method="dialog" id="questionForm">
+      <h3>질문하기</h3>
+      <input id="questionAuthor" maxlength="30" placeholder="작성자" required>
+      <input id="questionTitle" maxlength="80" placeholder="질문 제목" required>
+      <textarea id="questionContent" maxlength="1000" placeholder="궁금한 내용을 적어주세요!" required></textarea>
+      <div class="dialog-actions">
+        <button value="cancel" type="button" id="cancelQuestion">취소</button>
+        <button value="default" class="primary">저장하기</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="questionViewDialog">
+    <div class="question-view">
+      <button class="modal-close" id="closeQuestionView" aria-label="닫기">×</button>
+      <p class="eyebrow">QUESTION</p>
+      <h3 id="viewQuestionTitle"></h3>
+      <div class="question-content" id="viewQuestionContent"></div>
+      <small id="viewQuestionDate"></small>
+
+      <div class="reply-area">
+        <div class="reply-head">
+          <strong>답장</strong>
+          <span id="replyCount">0개</span>
+        </div>
+        <div id="questionReplies" class="replies"></div>
+        <button class="reply-button" id="replyQuestion">답장하기</button>
+      </div>
+
+      <button class="delete-icon" id="deleteQuestion" aria-label="질문 삭제" title="질문 삭제">🗑</button>
+    </div>
+  </dialog>
+
+
+  <dialog id="replyDialog">
+    <form method="dialog" id="replyForm">
+      <h3 id="replyDialogTitle">답장하기</h3>
+      <input id="replyAuthor" maxlength="30" placeholder="작성자" required>
+      <textarea id="replyContent" maxlength="1000" placeholder="답장 내용을 적어주세요!" required></textarea>
+      <div class="dialog-actions">
+        <button value="cancel" type="button" id="cancelReply">취소</button>
+        <button value="default" class="primary">답장 등록</button>
+      </div>
+    </form>
+  </dialog>
+
+
+  <script src="script.js"></script>
+</body>
+</html>
