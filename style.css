@@ -333,3 +333,10 @@ dialog{
 .reply-actions button{border:0;background:transparent;font-size:11px;color:#999;cursor:pointer;padding:2px 4px}
 .reply-actions button:hover{color:#222;text-decoration:underline}
 @media(max-width:600px){.reply-item{padding-right:13px;padding-bottom:36px}.reply-actions{right:10px;bottom:8px}}
+
+.admin-reply-note{
+  display:block;
+  margin-top:8px;
+  color:#888;
+  font-size:12px;
+}

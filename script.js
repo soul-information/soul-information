@@ -3,6 +3,10 @@ let questions = JSON.parse(localStorage.getItem("soulQuestions") || "[]");
 
 // 로그인 없이도 "내가 작성한 답장"을 구분하기 위한 브라우저 전용 키
 const REPLY_OWNER_KEY = "soulReplyOwnerToken";
+// 질문 답장은 사이트 관리자(소울)만 작성할 수 있도록 세션 인증을 사용합니다.
+// 실제 보안 인증은 아니므로, 민감한 정보 보호용으로 사용하면 안 됩니다.
+const QUESTION_ADMIN_KEY = "soulQuestionAdmin";
+const QUESTION_ADMIN_HASH = "ed083133ee739f2d04c92b3ce844b8aeb762cc16ffda2ea3ca5d1fcef6121a1d";
 let replyOwnerToken = localStorage.getItem(REPLY_OWNER_KEY);
 if(!replyOwnerToken){
   replyOwnerToken = (crypto && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -133,10 +137,11 @@ function renderReplies(replies,element){
   if(!element)return;
   if(!replies.length){element.innerHTML=`<div class="reply-empty">아직 답장이 없어요.</div>`;return;}
   element.innerHTML=replies.map((r,i)=>{
-    const mine = r.ownerToken && r.ownerToken === replyOwnerToken;
+    const isQuestionReply = element.id === "questionReplies";
+    const mine = isQuestionReply ? !!r.isAdmin : (r.ownerToken && r.ownerToken === replyOwnerToken);
     return `<div class="reply-item" data-reply-index="${i}">
       <div class="reply-content">${escapeHtml(r.content)}</div>
-      <small>${escapeHtml(r.author||"익명")} · ${escapeHtml(r.date||"")}</small>
+      <small>${escapeHtml(r.author||"익명")} · ${escapeHtml(r.date||"")}${r.edited ? " · 수정됨" : ""}</small>
       ${mine ? `<div class="reply-actions"><button type="button" class="reply-edit" data-reply-action="edit">수정</button><button type="button" class="reply-delete" data-reply-action="delete">삭제</button></div>` : ""}
     </div>`;
   }).join("");
@@ -163,7 +168,10 @@ function refreshCurrentReplies(){
 function editReply(index){
   const replies=getCurrentReplies();
   const reply=replies[index];
-  if(!reply || reply.ownerToken !== replyOwnerToken) return;
+  if(!reply) return;
+  if(replyTargetType === "question") {
+    if(!reply.isAdmin || sessionStorage.getItem(QUESTION_ADMIN_KEY) !== "1") return;
+  } else if(reply.ownerToken !== replyOwnerToken) return;
   const next=prompt("답장 내용을 수정해주세요.", reply.content || "");
   if(next===null) return;
   const content=next.trim();
@@ -177,7 +185,10 @@ function editReply(index){
 function deleteReply(index){
   const replies=getCurrentReplies();
   const reply=replies[index];
-  if(!reply || reply.ownerToken !== replyOwnerToken) return;
+  if(!reply) return;
+  if(replyTargetType === "question") {
+    if(!reply.isAdmin || sessionStorage.getItem(QUESTION_ADMIN_KEY) !== "1") return;
+  } else if(reply.ownerToken !== replyOwnerToken) return;
   if(!confirm("내가 작성한 이 답장을 삭제할까요?")) return;
   replies.splice(index,1);
   if(replyTargetType === "post") localStorage.setItem("soulPosts",JSON.stringify(posts));
@@ -187,20 +198,49 @@ function deleteReply(index){
 document.getElementById("replyPost").addEventListener("click",()=>{
   replyTargetType="post";replyTargetIndex=Number(postViewDialog.dataset.index);
   document.getElementById("replyDialogTitle").textContent="게시글에 답장하기";
+  document.getElementById("replyAuthor").removeAttribute("disabled");
+  document.getElementById("replyAuthor").value="";
   replyDialog.showModal();
 });
-document.getElementById("replyQuestion").addEventListener("click",()=>{
+async function authenticateQuestionAdmin(){
+  if(sessionStorage.getItem(QUESTION_ADMIN_KEY) === "1") return true;
+  const password = prompt("질문에 답장하려면 관리자 비밀번호를 입력해주세요.");
+  if(password === null) return false;
+  const data = new TextEncoder().encode(password);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  const hash = Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("");
+  if(hash !== QUESTION_ADMIN_HASH){
+    alert("비밀번호가 올바르지 않아요.");
+    return false;
+  }
+  sessionStorage.setItem(QUESTION_ADMIN_KEY,"1");
+  return true;
+}
+
+document.getElementById("replyQuestion").addEventListener("click",async()=>{
+  if(!(await authenticateQuestionAdmin())) return;
   replyTargetType="question";replyTargetIndex=Number(questionViewDialog.dataset.index);
   document.getElementById("replyDialogTitle").textContent="질문에 답장하기";
+  document.getElementById("replyAuthor").value="소울";
+  document.getElementById("replyAuthor").setAttribute("disabled","disabled");
   replyDialog.showModal();
 });
-document.getElementById("cancelReply").addEventListener("click",()=>replyDialog.close());
+document.getElementById("cancelReply").addEventListener("click",()=>{
+  document.getElementById("replyAuthor").removeAttribute("disabled");
+  replyDialog.close();
+});
 document.getElementById("replyForm").addEventListener("submit",e=>{
   e.preventDefault();
   const author=document.getElementById("replyAuthor").value.trim();
   const content=document.getElementById("replyContent").value.trim();
   if(!author||!content)return;
-  const r={content,author,date:today(),ownerToken:replyOwnerToken};
+  const isQuestionReply = replyTargetType === "question";
+  if(isQuestionReply && sessionStorage.getItem(QUESTION_ADMIN_KEY) !== "1"){
+    alert("질문 답장은 소울만 작성할 수 있어요.");
+    replyDialog.close();
+    return;
+  }
+  const r=isQuestionReply ? {content,author:"소울",date:today(),isAdmin:true} : {content,author,date:today(),ownerToken:replyOwnerToken};
   if(replyTargetType==="post"){
     posts[replyTargetIndex].replies=posts[replyTargetIndex].replies||[];
     posts[replyTargetIndex].replies.push(r);localStorage.setItem("soulPosts",JSON.stringify(posts));
@@ -211,7 +251,9 @@ document.getElementById("replyForm").addEventListener("submit",e=>{
     renderReplies(questions[replyTargetIndex].replies,document.getElementById("questionReplies"));
     document.getElementById("replyCount").textContent=`${questions[replyTargetIndex].replies.length}개`;
   }
-  e.target.reset();replyDialog.close();
+  e.target.reset();
+  document.getElementById("replyAuthor").removeAttribute("disabled");
+  replyDialog.close();
 });
 
 /* 메뉴 */
